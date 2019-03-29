@@ -100,6 +100,10 @@ func main() {
 			Usage: "Disable setting up CNI config and binaries",
 		},
 		cli.BoolFlag{
+			Name:  "disable-vxlanhostns-sync",
+			Usage: "Disable sync iptables CATTLE_NETWORK_POLICY chain in vxlan-hostns mode",
+		},
+		cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Turn on debug logging",
 		},
@@ -149,6 +153,7 @@ func run(c *cli.Context) error {
 		log.Errorf("Failed to start unmanaged container reaper: %v", err)
 	}
 
+	iptablessync.DisableCattleNetworkPolicySync = c.Bool("disable-vxlanhostns-sync")
 	if err := iptablessync.Watch(c.Int("iptables-sync-interval"), mClient); err != nil {
 		log.Errorf("Failed to start iptablessync: %v", err)
 	}

@@ -17,7 +17,8 @@ import (
 
 var (
 	// DefaultSyncInterval specifies the default value for arpsync interval in seconds
-	DefaultSyncInterval = 120
+	DefaultSyncInterval            = 120
+	DisableCattleNetworkPolicySync = false
 )
 
 // IPTablesWatcher makes sure the order of the chains is maintained
@@ -92,7 +93,9 @@ func (iptw *IPTablesWatcher) createChains() error {
 	buf.WriteString("\nCOMMIT\n")
 
 	buf.WriteString("*filter\n")
-	buf.WriteString(":CATTLE_NETWORK_POLICY -\n")
+	if !DisableCattleNetworkPolicySync {
+		buf.WriteString(":CATTLE_NETWORK_POLICY -\n")
+	}
 	buf.WriteString(":CATTLE_FORWARD -\n")
 	buf.WriteString("\nCOMMIT\n")
 
@@ -216,21 +219,23 @@ func (iptw *IPTablesWatcher) checkAndHookChains() error {
 		log.Errorf("iptablessync: err=%v", err)
 	}
 
-	bridgeSubnet, err := iptw.getBridgeSubnet()
-	if err != nil {
-		hasErrored = true
-		log.Errorf("iptablessync: error fetching bridgeSubnet: %v", err)
-	} else {
-		log.Debugf("iptablessync: bridgeSubnet=%v", bridgeSubnet)
-		if err = checkOneHookRule(hookRule{
-			table:    "filter",
-			chain:    "FORWARD",
-			dstChain: "CATTLE_NETWORK_POLICY",
-			spec:     fmt.Sprintf("-s %v -d %v -j CATTLE_NETWORK_POLICY", bridgeSubnet, bridgeSubnet),
-			num:      "1",
-		}); err != nil {
+	if !DisableCattleNetworkPolicySync {
+		bridgeSubnet, err := iptw.getBridgeSubnet()
+		if err != nil {
 			hasErrored = true
-			log.Errorf("iptablessync: err=%v", err)
+			log.Errorf("iptablessync: error fetching bridgeSubnet: %v", err)
+		} else {
+			log.Debugf("iptablessync: bridgeSubnet=%v", bridgeSubnet)
+			if err = checkOneHookRule(hookRule{
+				table:    "filter",
+				chain:    "FORWARD",
+				dstChain: "CATTLE_NETWORK_POLICY",
+				spec:     fmt.Sprintf("-s %v -d %v -j CATTLE_NETWORK_POLICY", bridgeSubnet, bridgeSubnet),
+				num:      "1",
+			}); err != nil {
+				hasErrored = true
+				log.Errorf("iptablessync: err=%v", err)
+			}
 		}
 	}
 
