@@ -55,7 +55,7 @@ type FilterRule struct {
 
 func (f FilterRule) filterIptables() []byte {
 	buf := &bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("-A CATTLE_FORWARD -d %s -o %s -j ACCEPT\n", f.bridgeSubnet, f.bridge))
+	buf.WriteString(fmt.Sprintf("-A CATTLE_FORWARD -d %s -o %s -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT\n", f.bridgeSubnet, f.bridge))
 	if f.bridge != f.dockerBridge {
 		buf.WriteString(fmt.Sprintf("-A CATTLE_FORWARD -o %s -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT\n", f.bridge))
 		buf.WriteString(fmt.Sprintf("-A CATTLE_FORWARD -i %s ! -o %s -j ACCEPT\n", f.bridge, f.bridge))
@@ -260,6 +260,7 @@ func (w *watcher) apply(prules map[string]PortRule, frules map[string]FilterRule
 	buf.WriteString("*filter\n")
 	buf.WriteString(":CATTLE_FORWARD -\n")
 	buf.WriteString("-F CATTLE_FORWARD\n")
+	buf.WriteString("-A CATTLE_FORWARD -m conntrack --ctstate INVALID -j DROP\n")
 	buf.WriteString("-A CATTLE_FORWARD -m mark --mark 0x1068 -j ACCEPT\n")
 	// For k8s
 	buf.WriteString("-A CATTLE_FORWARD -m mark --mark 0x4000 -j ACCEPT\n")
