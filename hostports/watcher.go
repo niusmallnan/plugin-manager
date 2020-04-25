@@ -260,7 +260,7 @@ func (w *watcher) apply(prules map[string]PortRule, frules map[string]FilterRule
 	buf.WriteString("*filter\n")
 	buf.WriteString(":CATTLE_FORWARD -\n")
 	buf.WriteString("-F CATTLE_FORWARD\n")
-	buf.WriteString("-A CATTLE_FORWARD -m conntrack --ctstate INVALID -j DROP\n")
+	// buf.WriteString("-A CATTLE_FORWARD -m conntrack --ctstate INVALID -j DROP\n")
 	buf.WriteString("-A CATTLE_FORWARD -m mark --mark 0x1068 -j ACCEPT\n")
 	// For k8s
 	buf.WriteString("-A CATTLE_FORWARD -m mark --mark 0x4000 -j ACCEPT\n")

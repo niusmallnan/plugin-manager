@@ -19,6 +19,7 @@ var (
 	// DefaultSyncInterval specifies the default value for arpsync interval in seconds
 	DefaultSyncInterval            = 120
 	DisableCattleNetworkPolicySync = false
+	DisableCattleDropInvalidConn   = false
 )
 
 // IPTablesWatcher makes sure the order of the chains is maintained
@@ -95,6 +96,12 @@ func (iptw *IPTablesWatcher) createChains() error {
 	buf.WriteString("*filter\n")
 	if !DisableCattleNetworkPolicySync {
 		buf.WriteString(":CATTLE_NETWORK_POLICY -\n")
+	}
+	if !DisableCattleDropInvalidConn {
+		buf.WriteString(":CATTLE_INPUT -\n")
+		buf.WriteString("-F CATTLE_INPUT\n")
+		buf.WriteString("-A CATTLE_INPUT -m conntrack --ctstate INVALID -j DROP\n")
+		buf.WriteString("-A CATTLE_INPUT -j RETURN\n")
 	}
 	buf.WriteString(":CATTLE_FORWARD -\n")
 	buf.WriteString("\nCOMMIT\n")
@@ -217,6 +224,19 @@ func (iptw *IPTablesWatcher) checkAndHookChains() error {
 	}); err != nil {
 		hasErrored = true
 		log.Errorf("iptablessync: err=%v", err)
+	}
+
+	if !DisableCattleDropInvalidConn {
+		if err = checkOneHookRule(hookRule{
+			table:    "filter",
+			chain:    "INPUT",
+			dstChain: "CATTLE_INPUT",
+			spec:     "-j CATTLE_INPUT",
+			num:      "1",
+		}); err != nil {
+			hasErrored = true
+			log.Errorf("iptablessync: err=%v", err)
+		}
 	}
 
 	if !DisableCattleNetworkPolicySync {

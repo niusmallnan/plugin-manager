@@ -104,6 +104,10 @@ func main() {
 			Usage: "Disable sync iptables CATTLE_NETWORK_POLICY chain in vxlan-hostns mode",
 		},
 		cli.BoolFlag{
+			Name:  "disable-drop-invalid-conn",
+			Usage: "Disable drop the invalid conn in CATTLE_INPUT",
+		},
+		cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Turn on debug logging",
 		},
@@ -154,6 +158,7 @@ func run(c *cli.Context) error {
 	}
 
 	iptablessync.DisableCattleNetworkPolicySync = c.Bool("disable-vxlanhostns-sync")
+	iptablessync.DisableCattleDropInvalidConn = c.Bool("disable-drop-invalid-conn")
 	if err := iptablessync.Watch(c.Int("iptables-sync-interval"), mClient); err != nil {
 		log.Errorf("Failed to start iptablessync: %v", err)
 	}
