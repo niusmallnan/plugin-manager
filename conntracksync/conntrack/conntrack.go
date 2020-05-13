@@ -72,6 +72,7 @@ func CTEntryDelete(e CTEntry) error {
 		"--orig-port-dst", e.OriginalDestinationPort,
 		"--reply-src", e.ReplySourceIP,
 		"--reply-dst", e.ReplyDestinationIP,
+		"|| true",
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -173,6 +174,7 @@ func parseOneConntrackEntry(e string) (CTEntry, error) {
 func deleteEntries(entries []CTEntry) error {
 	hasErrored := false
 	for _, ctEntry := range entries {
+		log.Debugf("conntrack: will delete ctEntry: %v", ctEntry)
 		if err := CTEntryDelete(ctEntry); err != nil {
 			log.Errorf("conntrack: error deleting the conntrack entry: %v", err)
 			hasErrored = true
