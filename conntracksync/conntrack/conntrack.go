@@ -76,6 +76,10 @@ func CTEntryDelete(e CTEntry) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			log.Debugf("conntrack: ignore conntrack exit error: %v", e)
+			return nil
+		}
 		log.Errorf("error deleting conntrack entry: %v", err)
 		return err
 	}
@@ -173,6 +177,7 @@ func parseOneConntrackEntry(e string) (CTEntry, error) {
 func deleteEntries(entries []CTEntry) error {
 	hasErrored := false
 	for _, ctEntry := range entries {
+		log.Debugf("conntrack: will delete ctEntry: %v", ctEntry)
 		if err := CTEntryDelete(ctEntry); err != nil {
 			log.Errorf("conntrack: error deleting the conntrack entry: %v", err)
 			hasErrored = true
