@@ -122,10 +122,10 @@ func GetLocalNetworksAndRouters(networks []metadata.Network, host metadata.Host,
 
 		// Hack to handle multiple networks in the environment during upgrade
 		// Context: pre cni-driver service release to cni-driver release
-		_, ok = localRouters[aNetwork.UUID]
-		if !ok {
-			continue
-		}
+		//_, ok = localRouters[aNetwork.UUID]
+		//if !ok {
+		//continue
+		//}
 
 		localNetworks = append(localNetworks, aNetwork)
 	}
